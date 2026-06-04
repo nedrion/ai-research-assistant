@@ -32,6 +32,8 @@ def build_parser() -> argparse.ArgumentParser:
     remove_parser = subparsers.add_parser("remove", help="Remove a specific PDF's chunks")
     remove_parser.add_argument("pdf_path", help="Source PDF filename to remove")
 
+    subparsers.add_parser("serve", help="Start the FastAPI server")
+
     return parser
 
 
@@ -79,6 +81,10 @@ def main():
         cli.ask(pipeline, args.question)
     elif args.command == "chat":
         cli.chat(pipeline)
+    elif args.command == "serve":
+        import uvicorn
+        print(f"Starting API at http://{config.API_HOST}:{config.API_PORT}")
+        uvicorn.run("src.api.app:app", host=config.API_HOST, port=config.API_PORT, reload=False)
 
 
 if __name__ == "__main__":

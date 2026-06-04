@@ -1,12 +1,29 @@
 # AI Research Assistant
 
-Local RAG (Retrieval-Augmented Generation) system for querying PDF documents via CLI.
+Local RAG (Retrieval-Augmented Generation) system for querying PDF documents via CLI and REST API.
 
 ## Architecture
 
-![Architecture diagram](screenshots/architecture.svg)
+```
+┌─────────────────────────────────────────────┐
+│          Presentation Layer                  │
+│  CLI (src/ui/cli.py)   API (src/api/)        │
+└─────────────────────┬───────────────────────┘
+                      │ calls
+┌─────────────────────┴───────────────────────┐
+│           Business Layer                     │
+│  src/qa/pipeline.py  (RAGPipeline)           │
+│  src/config.py                               │
+└─────────────────────┬───────────────────────┘
+                      │ orchestrates
+┌─────────────────────┴───────────────────────┐
+│            Data Layer                        │
+│  src/ingestion/    src/embeddings/           │
+│  src/vector_store/ src/qa/llm_client.py      │
+└─────────────────────────────────────────────┘
+```
 
-The pipeline works in two stages:
+![Architecture diagram](screenshots/architecture.svg)
 
 **Ingestion** — PDF → chunk → embed → store in ChromaDB
 
@@ -34,41 +51,74 @@ cp .env.example .env   # or: copy .env.example .env
 - **Ollama** running locally with a model pulled (`ollama pull llama3.2`)
 - Python 3.10+
 
-## CLI Commands
+## CLI
 
-| Command | Description |
-|---------|-------------|
-| `ingest <pdf>` | Load a PDF — extract text, chunk, embed, and store in ChromaDB |
-| `ask <question>` | Retrieve relevant chunks and answer via LLM |
-| `chat` | Interactive chat session (type `exit` to quit) |
-| `status` | Show vector store stats (total chunks, source documents) |
-| `remove <pdf>` | Delete all chunks that came from a specific source PDF |
-| `clear` | Wipe the entire vector store (asks confirmation) |
-| `models` | List installed Ollama models; `*` marks the current one |
+```bash
+python -m src.main serve       # Start the FastAPI server
+python -m src.main ingest doc.pdf
+python -m src.main ask "question"
+python -m src.main chat
+python -m src.main status
+python -m src.main remove doc.pdf
+python -m src.main clear
+python -m src.main models
+```
+
+## API
+
+Start the server:
+
+```bash
+python -m src.main serve
+# Listening on http://127.0.0.1:8000
+```
+
+### Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/documents` | Ingest a PDF by URL or local path (JSON body) |
+| `POST` | `/documents/upload` | Ingest a PDF by file upload (multipart) |
+| `GET` | `/documents` | List ingested documents with chunk counts |
+| `DELETE` | `/documents` | Clear all documents |
+| `DELETE` | `/documents/{filename}` | Remove a specific document |
+| `POST` | `/query` | Ask a question (session-based) |
+| `GET` | `/status` | Vector store stats |
+| `GET` | `/models` | Available Ollama models |
+| `GET` | `/docs` | Interactive Swagger UI |
 
 ### Examples
 
 ```bash
-# Ingest
-python -m src.main ingest paper.pdf
+# Upload a PDF
+curl -X POST -F "file=@paper.pdf" http://127.0.0.1:8000/documents/upload
 
-# Ask
-python -m src.main ask "What methodology was used?"
+# Ingest from URL
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com/paper.pdf"}' \
+  http://127.0.0.1:8000/documents
 
-# Interactive chat
-python -m src.main chat
+# Ask a question (returns session_id for follow-ups)
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"question": "What is the main finding?"}' \
+  http://127.0.0.1:8000/query
+
+# Follow-up in the same conversation
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"question": "Tell me more", "session_id": "<id from previous>"}' \
+  http://127.0.0.1:8000/query
 
 # Check store
-python -m src.main status
+curl http://127.0.0.1:8000/status
 
-# Remove a document's chunks
-python -m src.main remove paper.pdf
+# List models
+curl http://127.0.0.1:8000/models
 
-# Start fresh
-python -m src.main clear
+# Remove a document
+curl -X DELETE http://127.0.0.1:8000/documents/paper.pdf
 
-# See available LLM models
-python -m src.main models
+# Clear everything
+curl -X DELETE http://127.0.0.1:8000/documents
 ```
 
 ## Configuration
@@ -84,22 +134,32 @@ Edit `.env` to tune:
 | `CHUNK_OVERLAP` | `50` | Overlap between chunks |
 | `TOP_K` | `5` | Retrieved chunks per query |
 | `COLLECTION_NAME` | `documents` | ChromaDB collection name |
+| `API_HOST` | `127.0.0.1` | API server bind address |
+| `API_PORT` | `8000` | API server port |
 
-Model switching is done at runtime — change `LLM_MODEL` in `.env` and re-run any command. The system validates the model exists in Ollama before proceeding.
+Model switching is done at runtime — change `LLM_MODEL` in `.env` and restart. The system validates the model exists in Ollama before proceeding.
 
 ## Project Structure
 
 ```
 src/
-├── ingestion/     # PDF loading & text chunking
-├── embeddings/    # Vector embedding generation
-├── vector_store/  # ChromaDB persistence & search
-├── qa/            # LLM client & RAG pipeline orchestration
-├── ui/            # Rich CLI interface
-├── config.py      # Settings
-└── main.py        # Entry point
+├── api/            # Presentation Layer — FastAPI routes, schemas, DI
+│   ├── app.py
+│   ├── schemas.py
+│   ├── dependencies.py
+│   └── routes/
+│       ├── documents.py
+│       ├── query.py
+│       └── status.py
+├── ingestion/      # Data Layer — PDF loading & text chunking
+├── embeddings/     # Data Layer — Vector embedding generation
+├── vector_store/   # Data Layer — ChromaDB persistence & search
+├── qa/             # Business Layer — LLM client & RAG pipeline
+├── ui/             # Presentation Layer — Rich CLI interface
+├── config.py       # Settings
+└── main.py         # Entry point (CLI + serve)
 data/
-├── chroma/        # Vector store persistence (gitignored)
+├── chroma/         # Vector store persistence (gitignored)
 screenshots/
 ├── architecture.svg
 ├── status.svg

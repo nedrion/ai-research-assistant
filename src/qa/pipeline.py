@@ -9,14 +9,15 @@ class RAGPipeline:
         self.llm = llm_client
         self.top_k = top_k
 
-    def ingest(self, pdf_path: str, chunk_size: int, chunk_overlap: int) -> int:
+    def ingest(self, pdf_path: str, chunk_size: int, chunk_overlap: int, source_name: str = None) -> int:
         text = load_pdf(pdf_path)
         chunks = chunk_text(text, chunk_size, chunk_overlap)
         if not chunks:
             return 0
 
+        source = source_name or pdf_path
         metadatas = [
-            {"source": pdf_path, "chunk_index": i} for i in range(len(chunks))
+            {"source": source, "chunk_index": i} for i in range(len(chunks))
         ]
         embeddings = self.embedder.embed(chunks)
         self.vector_store.add_documents(chunks, embeddings, metadatas)
