@@ -27,9 +27,15 @@ Thumbs.db
 
 # Temp / logs
 *.log
+srv_*.txt
+e2e_*.txt
+uv_*.txt
 .ruff_cache/
 .mypy_cache/
 .pytest_cache/
+
+# Node
+node_modules/
 
 # Project specific - don't commit PDFs or screenshots
 *.pdf

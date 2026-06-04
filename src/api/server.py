@@ -1,9 +1,11 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from src.api.routes import documents, query, status
 
@@ -48,6 +50,18 @@ async def validation_handler(request: Request, exc: RequestValidationError):
     )
 
 
-app.include_router(documents.router)
-app.include_router(query.router)
-app.include_router(status.router)
+app.include_router(documents.router, prefix="/api")
+app.include_router(query.router, prefix="/api")
+app.include_router(status.router, prefix="/api")
+
+ui_dist = Path(__file__).resolve().parent.parent / "ui" / "dist"
+spa_index = ui_dist / "index.html"
+
+if ui_dist.is_dir():
+    app.mount("/assets", StaticFiles(directory=str(ui_dist / "assets")), name="assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        if full_path.startswith("api/") or full_path.startswith("assets/"):
+            raise HTTPException(status_code=404)
+        return FileResponse(str(spa_index))
