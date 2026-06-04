@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 320" font-family="system-ui, -apple-system, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#555"/>
+    </marker>
+    <linearGradient id="boxGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f8f9fa"/>
+      <stop offset="100%" stop-color="#e9ecef"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Title -->
+  <text x="450" y="30" text-anchor="middle" font-size="16" font-weight="bold" fill="#333">RAG Pipeline Architecture</text>
+
+  <!-- Boxes -->
+  <!-- PDF -->
+  <rect x="30" y="70" width="110" height="60" rx="8" fill="url(#boxGrad)" stroke="#adb5bd" stroke-width="1.5"/>
+  <text x="85" y="100" text-anchor="middle" font-size="13" font-weight="bold" fill="#212529">PDF</text>
+  <text x="85" y="116" text-anchor="middle" font-size="10" fill="#6c757d">Document</text>
+
+  <!-- Chunking -->
+  <rect x="190" y="70" width="110" height="60" rx="8" fill="url(#boxGrad)" stroke="#adb5bd" stroke-width="1.5"/>
+  <text x="245" y="100" text-anchor="middle" font-size="13" font-weight="bold" fill="#212529">Chunking</text>
+  <text x="245" y="116" text-anchor="middle" font-size="10" fill="#6c757d">Paragraph split</text>
+
+  <!-- Embedding -->
+  <rect x="350" y="70" width="110" height="60" rx="8" fill="url(#boxGrad)" stroke="#adb5bd" stroke-width="1.5"/>
+  <text x="405" y="100" text-anchor="middle" font-size="13" font-weight="bold" fill="#212529">Embedding</text>
+  <text x="405" y="116" text-anchor="middle" font-size="10" fill="#6c757d">sentence-transformers</text>
+
+  <!-- Vector Search -->
+  <rect x="510" y="70" width="110" height="60" rx="8" fill="url(#boxGrad)" stroke="#adb5bd" stroke-width="1.5"/>
+  <text x="565" y="100" text-anchor="middle" font-size="13" font-weight="bold" fill="#212529">Vector Search</text>
+  <text x="565" y="116" text-anchor="middle" font-size="10" fill="#6c757d">ChromaDB</text>
+
+  <!-- LLM -->
+  <rect x="670" y="70" width="110" height="60" rx="8" fill="url(#boxGrad)" stroke="#adb5bd" stroke-width="1.5"/>
+  <text x="725" y="100" text-anchor="middle" font-size="13" font-weight="bold" fill="#212529">LLM</text>
+  <text x="725" y="116" text-anchor="middle" font-size="10" fill="#6c757d">Ollama</text>
+
+  <!-- Answer -->
+  <rect x="830" y="70" width="50" height="60" rx="8" fill="url(#boxGrad)" stroke="#adb5bd" stroke-width="1.5"/>
+  <text x="855" y="100" text-anchor="middle" font-size="13" font-weight="bold" fill="#212529">Ans</text>
+
+  <!-- Arrows between top boxes -->
+  <line x1="140" y1="100" x2="188" y2="100" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="300" y1="100" x2="348" y2="100" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="460" y1="100" x2="508" y2="100" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="620" y1="100" x2="668" y2="100" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="780" y1="100" x2="828" y2="100" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Bottom row: technology labels -->
+  <rect x="30" y="150" width="110" height="36" rx="6" fill="#d3f9d8" stroke="#69db7c" stroke-width="1"/>
+  <text x="85" y="173" text-anchor="middle" font-size="10" fill="#2b8a3e" font-weight="bold">PyMuPDF</text>
+
+  <rect x="190" y="150" width="110" height="36" rx="6" fill="#d3f9d8" stroke="#69db7c" stroke-width="1"/>
+  <text x="245" y="173" text-anchor="middle" font-size="10" fill="#2b8a3e" font-weight="bold">Recursive split</text>
+
+  <rect x="350" y="150" width="110" height="36" rx="6" fill="#d3f9d8" stroke="#69db7c" stroke-width="1"/>
+  <text x="405" y="173" text-anchor="middle" font-size="10" fill="#2b8a3e" font-weight="bold">MiniLM-L6-v2</text>
+
+  <rect x="510" y="150" width="110" height="36" rx="6" fill="#d3f9d8" stroke="#69db7c" stroke-width="1"/>
+  <text x="565" y="173" text-anchor="middle" font-size="10" fill="#2b8a3e" font-weight="bold">ChromaDB</text>
+
+  <rect x="670" y="150" width="110" height="36" rx="6" fill="#d3f9d8" stroke="#69db7c" stroke-width="1"/>
+  <text x="725" y="173" text-anchor="middle" font-size="10" fill="#2b8a3e" font-weight="bold">Ollama</text>
+
+  <!-- Query flow -->
+  <text x="450" y="220" text-anchor="middle" font-size="13" font-weight="bold" fill="#333">Query Flow</text>
+
+  <!-- Question -->
+  <rect x="30" y="235" width="110" height="36" rx="8" fill="#fff3bf" stroke="#fab005" stroke-width="1.5"/>
+  <text x="85" y="258" text-anchor="middle" font-size="12" font-weight="bold" fill="#212529">Question</text>
+
+  <!-- arrow -->
+  <line x1="140" y1="253" x2="188" y2="253" stroke="#555" stroke-width="2" marker-end="url(#arrow)" stroke-dasharray="5,3"/>
+
+  <!-- Retrieved chunks -->
+  <rect x="190" y="235" width="140" height="36" rx="8" fill="#fff3bf" stroke="#fab005" stroke-width="1.5"/>
+  <text x="260" y="258" text-anchor="middle" font-size="12" font-weight="bold" fill="#212529">Retrieved Chunks</text>
+
+  <!-- arrow -->
+  <line x1="330" y1="253" x2="388" y2="253" stroke="#555" stroke-width="2" marker-end="url(#arrow)" stroke-dasharray="5,3"/>
+
+  <!-- Context + Prompt -->
+  <rect x="390" y="235" width="160" height="36" rx="8" fill="#fff3bf" stroke="#fab005" stroke-width="1.5"/>
+  <text x="470" y="258" text-anchor="middle" font-size="12" font-weight="bold" fill="#212529">Build Prompt</text>
+
+  <!-- arrow -->
+  <line x1="550" y1="253" x2="608" y2="253" stroke="#555" stroke-width="2" marker-end="url(#arrow)" stroke-dasharray="5,3"/>
+
+  <!-- LLM Generate -->
+  <rect x="610" y="235" width="110" height="36" rx="8" fill="#fff3bf" stroke="#fab005" stroke-width="1.5"/>
+  <text x="665" y="258" text-anchor="middle" font-size="12" font-weight="bold" fill="#212529">LLM Generate</text>
+
+  <!-- arrow -->
+  <line x1="720" y1="253" x2="768" y2="253" stroke="#555" stroke-width="2" marker-end="url(#arrow)" stroke-dasharray="5,3"/>
+
+  <!-- Answer out -->
+  <rect x="770" y="235" width="110" height="36" rx="8" fill="#d3f9d8" stroke="#69db7c" stroke-width="1.5"/>
+  <text x="825" y="258" text-anchor="middle" font-size="12" font-weight="bold" fill="#212529">Answer</text>
+
+  <!-- CLI label -->
+  <rect x="30" y="285" width="450" height="22" rx="4" fill="#e8f4ff" stroke="#74c0fc" stroke-width="1"/>
+  <text x="255" y="300" text-anchor="middle" font-size="9" fill="#1971c2">python -m src.main ingest doc.pdf | ask "?" | chat</text>
+
+  <rect x="610" y="285" width="270" height="22" rx="4" fill="#e8f4ff" stroke="#74c0fc" stroke-width="1"/>
+  <text x="745" y="300" text-anchor="middle" font-size="9" fill="#1971c2">ollama pull llama3.2</text>
+</svg>
