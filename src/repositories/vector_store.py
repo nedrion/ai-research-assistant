@@ -4,7 +4,7 @@ import chromadb
 from chromadb.config import Settings
 
 
-class VectorStore:
+class VectorRepository:
     def __init__(self, persist_dir: str, collection_name: str = "documents"):
         self.client = chromadb.PersistentClient(
             path=persist_dir,

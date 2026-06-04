@@ -5,13 +5,14 @@ from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.prompt import Prompt
 
+from src.core.config import settings
+from src.services.llm_service import LlmService
+
 console = Console()
 
 
-def list_models(config):
-    from src.qa.llm_client import OllamaClient
-
-    llm = OllamaClient(config.OLLAMA_BASE_URL)
+def list_models():
+    llm = LlmService(settings.ollama_base_url)
     if not llm.is_server_running():
         console.print("[red]Ollama is not running. Start it with 'ollama serve'[/red]")
         return
@@ -20,21 +21,21 @@ def list_models(config):
     if models:
         console.print("[bold]Available Ollama models:[/bold]")
         for m in models:
-            marker = "[green]*[/green]" if m == config.LLM_MODEL else " "
+            marker = "[green]*[/green]" if m == settings.llm_model else " "
             console.print(f"  {marker} {m}")
-        console.print(f"\nSet LLM_MODEL in .env to switch. Current: [bold]{config.LLM_MODEL}[/bold]")
+        console.print(f"\nSet LLM_MODEL in .env to switch. Current: [bold]{settings.llm_model}[/bold]")
     else:
         console.print("No models found. Pull one with 'ollama pull <model>'")
 
 
-def ingest(pipeline, pdf_path: str, config):
+def ingest(pipeline, pdf_path: str):
     path = Path(pdf_path)
     if not path.exists():
         console.print(f"[red]File not found: {pdf_path}[/red]")
         return
 
     with console.status(f"[bold green]Ingesting {path.name}...") as status:
-        chunk_count = pipeline.ingest(str(path), config.CHUNK_SIZE, config.CHUNK_OVERLAP)
+        chunk_count = pipeline.ingest(str(path), settings.chunk_size, settings.chunk_overlap)
 
     total = pipeline.vector_store.count()
     console.print(f"[green]OK[/green] Ingested [bold]{path.name}[/bold] - {chunk_count} chunks created")

@@ -4,11 +4,11 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from starlette.status import HTTP_400_BAD_REQUEST
 
-from src import config
-from src.api.dependencies import get_pipeline, get_llm_client
+from src.api.deps import get_pipeline, get_llm_client
 from src.api.schemas import QueryRequest, QueryResponse, Source
-from src.qa.llm_client import OllamaClient
-from src.qa.pipeline import RAGPipeline
+from src.core.config import settings
+from src.services.llm_service import LlmService
+from src.services.rag_service import RagService
 
 router = APIRouter(tags=["query"])
 
@@ -19,16 +19,16 @@ _sessions: dict[str, list[dict[str, str]]] = {}
 @router.post("/query", response_model=QueryResponse)
 async def query(
     body: QueryRequest,
-    pipeline: RAGPipeline = Depends(get_pipeline),
-    llm: OllamaClient = Depends(get_llm_client),
+    pipeline: RagService = Depends(get_pipeline),
+    llm: LlmService = Depends(get_llm_client),
 ):
     if not llm.is_server_running():
         raise HTTPException(HTTP_400_BAD_REQUEST, "Ollama is not running")
     if not llm.has_model():
-        raise HTTPException(HTTP_400_BAD_REQUEST, f"Model '{config.LLM_MODEL}' not found in Ollama")
+        raise HTTPException(HTTP_400_BAD_REQUEST, f"Model '{settings.llm_model}' not found in Ollama")
 
     session_id = body.session_id or str(uuid.uuid4())
-    top_k = body.top_k or config.TOP_K
+    top_k = body.top_k or settings.top_k
 
     if session_id not in _sessions:
         _sessions[session_id] = []

@@ -1,8 +1,7 @@
-from src.ingestion.loader import load_pdf
-from src.ingestion.chunker import chunk_text
+from src.services.pdf_service import load_pdf, chunk_text
 
 
-class RAGPipeline:
+class RagService:
     def __init__(self, embedder, vector_store, llm_client, top_k: int = 5):
         self.embedder = embedder
         self.vector_store = vector_store

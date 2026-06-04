@@ -10,7 +10,7 @@ from src.api.routes import documents, query, status
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    from src.api.dependencies import get_pipeline
+    from src.api.deps import get_pipeline
     _ = get_pipeline()
     yield
 
