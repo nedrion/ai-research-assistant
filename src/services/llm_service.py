@@ -48,10 +48,11 @@ class LlmService:
             pass
         return []
 
-    def ensure_model(self) -> None:
+    def ensure_model(self, model: str | None = None) -> None:
         from src.core.logging import get_logger
 
         log = get_logger(__name__)
+        target = model or self.model
 
         for attempt in range(30):
             if self.is_server_running():
@@ -62,19 +63,19 @@ class LlmService:
             log.warning("Ollama not reachable — skipping model pull")
             return
 
-        if self.has_model():
+        if target in self.list_models():
             return
 
-        log.info("Model '%s' not found locally — pulling from Ollama...", self.model)
+        log.info("Model '%s' not found locally — pulling from Ollama...", target)
         try:
             with httpx.Client(timeout=600) as client:
-                payload = {"name": self.model, "stream": False}
+                payload = {"name": target, "stream": False}
                 resp = client.post(f"{self.base_url}/api/pull", json=payload)
                 resp.raise_for_status()
-            log.info("Model '%s' pulled successfully", self.model)
+            log.info("Model '%s' pulled successfully", target)
         except Exception as exc:
-            log.warning("Failed to pull model '%s': %s", self.model, exc)
+            log.warning("Failed to pull model '%s': %s", target, exc)
 
-    async def ensure_model_async(self) -> None:
+    async def ensure_model_async(self, model: str | None = None) -> None:
         loop = asyncio.get_running_loop()
-        await loop.run_in_executor(None, self.ensure_model)
+        await loop.run_in_executor(None, self.ensure_model, model)

@@ -1,3 +1,4 @@
+import asyncio
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -20,7 +21,7 @@ async def lifespan(app: FastAPI):
     embedder = get_embedder()
     await embedder.async_load()
     llm = get_llm_client()
-    await llm.ensure_model_async()
+    asyncio.create_task(llm.ensure_model_async())
     yield
 
 

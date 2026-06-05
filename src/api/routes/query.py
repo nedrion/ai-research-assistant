@@ -1,3 +1,4 @@
+import asyncio
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -27,7 +28,9 @@ async def query(
     if not llm.is_server_running():
         raise HTTPException(HTTP_400_BAD_REQUEST, "Ollama is not running")
     if model not in llm.list_models():
-        raise HTTPException(HTTP_400_BAD_REQUEST, f"Model '{model}' not found in Ollama. Run: ollama pull {model}")
+        logger.info("Model '%s' not found — attempting auto-pull...", model)
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, llm.ensure_model, model)
 
     session_id = body.session_id or str(uuid.uuid4())
     top_k = body.top_k or settings.top_k
