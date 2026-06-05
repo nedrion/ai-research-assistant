@@ -1,0 +1,11 @@
+__pycache__
+*.pyc
+.env
+data/
+.git
+.gitignore
+README.md
+screenshots/
+node_modules/
+src/ui/node_modules/
+src/ui/dist/

@@ -138,6 +138,25 @@ curl -X DELETE http://127.0.0.1:8000/api/documents/paper.pdf
 curl -X DELETE http://127.0.0.1:8000/api/documents
 ```
 
+## Docker
+
+Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/) (with WSL2 backend on Windows).
+
+```bash
+# Build and start all services (model pulls automatically)
+docker compose up -d
+
+# View logs
+docker compose logs -f app
+
+# Stop everything
+docker compose down
+```
+
+The app is served at `http://localhost:8000`. On first startup, the app waits for Ollama to be ready, then automatically pulls the configured model (set via `LLM_MODEL` in `.env` or the `app` service environment). Data (vector store, sessions, uploaded PDFs) persists in Docker volumes.
+
+**Note:** The first startup may take longer while the sentence-transformer model and the LLM model download.
+
 ## Configuration
 
 Edit `.env` to tune:

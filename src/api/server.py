@@ -16,9 +16,11 @@ logger = get_logger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    from src.api.deps import get_embedder
+    from src.api.deps import get_embedder, get_llm_client
     embedder = get_embedder()
     await embedder.async_load()
+    llm = get_llm_client()
+    await llm.ensure_model_async()
     yield
 
 

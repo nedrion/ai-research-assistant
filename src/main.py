@@ -16,7 +16,7 @@ def main():
     from src.core.config import settings
 
     logger.info("Starting API at http://%s:%s", settings.api_host, settings.api_port)
-    uvicorn.run("src.api.server:app", host=settings.api_host, port=settings.api_port, reload=False)
+    uvicorn.run("src.api.server:app", host=settings.api_host, port=settings.api_port, reload=False, lifespan_timeout=600)
 
 
 if __name__ == "__main__":
