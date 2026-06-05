@@ -5,6 +5,7 @@ from src.services.embedding_service import EmbeddingService
 from src.services.llm_service import LlmService
 from src.services.rag_service import RagService
 from src.repositories.vector_store import VectorRepository
+from src.repositories.session_repository import SessionRepository
 
 
 @lru_cache
@@ -30,3 +31,8 @@ def get_pipeline() -> RagService:
         llm_client=get_llm_client(),
         top_k=settings.top_k,
     )
+
+
+@lru_cache
+def get_session_store() -> SessionRepository:
+    return SessionRepository()

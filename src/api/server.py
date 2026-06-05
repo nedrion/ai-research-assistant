@@ -1,3 +1,4 @@
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -7,13 +8,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from src.api.routes import documents, query, status
+from src.api.routes import documents, query, sessions, status
+from src.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    from src.api.deps import get_pipeline
-    _ = get_pipeline()
+    from src.api.deps import get_embedder
+    embedder = get_embedder()
+    await embedder.async_load()
     yield
 
 
@@ -33,6 +38,15 @@ app.add_middleware(
 )
 
 
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start = time.time()
+    response = await call_next(request)
+    duration = time.time() - start
+    logger.info("%s %s -> %s (%.2fs)", request.method, request.url.path, response.status_code, duration)
+    return response
+
+
 @app.exception_handler(RequestValidationError)
 async def validation_handler(request: Request, exc: RequestValidationError):
     errors = []
@@ -50,8 +64,18 @@ async def validation_handler(request: Request, exc: RequestValidationError):
     )
 
 
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.exception("Unhandled error on %s %s", request.method, request.url.path)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+    )
+
+
 app.include_router(documents.router, prefix="/api")
 app.include_router(query.router, prefix="/api")
+app.include_router(sessions.router, prefix="/api")
 app.include_router(status.router, prefix="/api")
 
 ui_dist = Path(__file__).resolve().parent.parent / "ui" / "dist"

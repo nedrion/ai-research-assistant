@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
+import { useNavigate } from "react-router-dom"
 import { Database, Cpu, FileText, Layers } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -6,6 +7,8 @@ import { Separator } from "@/components/ui/separator"
 import { getStatus, getModels } from "@/lib/api"
 
 export function StatusPage() {
+  const navigate = useNavigate()
+
   const { data: status, isLoading: statusLoading, error: statusError } = useQuery({
     queryKey: ["status"],
     queryFn: getStatus,
@@ -69,7 +72,12 @@ export function StatusPage() {
           <CardContent>
             <div className="flex flex-wrap gap-2">
               {models.models.map((m) => (
-                <Badge key={m.name} variant={m.current ? "default" : "secondary"}>
+                <Badge
+                  key={m.name}
+                  variant={m.current ? "default" : "secondary"}
+                  className="cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => navigate(`/chat?model=${encodeURIComponent(m.name)}`)}
+                >
                   {m.name}
                 </Badge>
               ))}

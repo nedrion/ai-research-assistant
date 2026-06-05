@@ -1,9 +1,11 @@
 import os
+import shutil
 import tempfile
 from pathlib import Path
 
 import httpx
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi.responses import FileResponse
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
 
 from src.api.deps import get_pipeline, get_vector_store
@@ -14,10 +16,33 @@ from src.api.schemas import (
     DocumentItem,
     DocumentRemoveResponse,
 )
+from src.core.logging import get_logger
 from src.services.rag_service import RagService
 from src.repositories.vector_store import VectorRepository
 
 router = APIRouter(tags=["documents"])
+logger = get_logger(__name__)
+
+PDFS_DIR = settings.data_dir / "pdfs"
+
+
+def _ensure_pdfs_dir():
+    PDFS_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _save_pdf(source_path: str, filename: str) -> str:
+    _ensure_pdfs_dir()
+    dest = PDFS_DIR / filename
+    shutil.copy2(source_path, str(dest))
+    logger.info("Saved PDF: %s", dest)
+    return str(dest)
+
+
+def _delete_pdf(filename: str):
+    path = PDFS_DIR / filename
+    if path.exists():
+        path.unlink()
+        logger.info("Deleted PDF: %s", path)
 
 
 @router.post("/documents", response_model=DocumentIngestResponse)
@@ -78,6 +103,7 @@ def _ingest(pipeline, store, upload_file=None, url=None, pdf_path_raw=None):
             pdf_path = str(p.resolve())
             filename = p.name
 
+        _save_pdf(pdf_path, filename)
         chunk_count = pipeline.ingest(pdf_path, settings.chunk_size, settings.chunk_overlap, source_name=filename)
         total = store.count()
 
@@ -96,6 +122,18 @@ def _ingest(pipeline, store, upload_file=None, url=None, pdf_path_raw=None):
             os.unlink(pdf_path)
 
 
+@router.get("/documents/{filename:path}/pdf")
+async def get_pdf(filename: str):
+    pdf_path = PDFS_DIR / filename
+    if not pdf_path.exists():
+        raise HTTPException(HTTP_404_NOT_FOUND, f"PDF not found: {filename}")
+    return FileResponse(
+        str(pdf_path),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"inline; filename=\"{filename}\""},
+    )
+
+
 @router.get("/documents", response_model=list[DocumentItem])
 async def list_documents(store: VectorRepository = Depends(get_vector_store)):
     sources = store.list_sources()
@@ -110,10 +148,14 @@ async def remove_document(
     removed = store.delete_by_source(filename)
     if removed == 0:
         raise HTTPException(HTTP_404_NOT_FOUND, f"No chunks found for '{filename}'")
+    _delete_pdf(filename)
     return DocumentRemoveResponse(filename=filename, chunks_removed=removed)
 
 
 @router.delete("/documents", response_model=DocumentClearResponse)
 async def clear_documents(store: VectorRepository = Depends(get_vector_store)):
     store.clear()
+    if PDFS_DIR.is_dir():
+        shutil.rmtree(str(PDFS_DIR))
+        PDFS_DIR.mkdir(parents=True, exist_ok=True)
     return DocumentClearResponse(message="Vector store cleared")

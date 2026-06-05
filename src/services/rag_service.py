@@ -1,4 +1,4 @@
-from src.services.pdf_service import load_pdf, chunk_text
+from src.services.pdf_service import load_pdf, chunk_text_with_pages
 
 
 class RagService:
@@ -9,14 +9,17 @@ class RagService:
         self.top_k = top_k
 
     def ingest(self, pdf_path: str, chunk_size: int, chunk_overlap: int, source_name: str = None) -> int:
-        text = load_pdf(pdf_path)
-        chunks = chunk_text(text, chunk_size, chunk_overlap)
-        if not chunks:
+        pages = load_pdf(pdf_path)
+        chunk_data = chunk_text_with_pages(pages, chunk_size, chunk_overlap)
+        if not chunk_data:
             return 0
+
+        chunks = [c[0] for c in chunk_data]
+        page_nums = [c[1] for c in chunk_data]
 
         source = source_name or pdf_path
         metadatas = [
-            {"source": source, "chunk_index": i} for i in range(len(chunks))
+            {"source": source, "chunk_index": i, "page": page_nums[i]} for i in range(len(chunks))
         ]
         embeddings = self.embedder.embed(chunks)
         self.vector_store.add_documents(chunks, embeddings, metadatas)
@@ -29,7 +32,7 @@ class RagService:
             return {"answer": "No relevant documents found.", "sources": []}
 
         context = "\n\n".join(
-            f"[Source: {r['metadata']['source']}, Chunk {r['metadata']['chunk_index']}]\n{r['document']}"
+            f"[Source: {r['metadata']['source']}, Page {r['metadata'].get('page', '?')}, Chunk {r['metadata']['chunk_index']}]\n{r['document']}"
             for r in results
         )
 
@@ -46,7 +49,11 @@ class RagService:
             return {"answer": f"LLM error: {exc}", "sources": []}
 
         sources = [
-            {"source": r["metadata"]["source"], "chunk_index": r["metadata"]["chunk_index"]}
+            {
+                "source": r["metadata"]["source"],
+                "chunk_index": r["metadata"]["chunk_index"],
+                "page": r["metadata"].get("page"),
+            }
             for r in results
         ]
         return {"answer": answer, "sources": sources}

@@ -6,11 +6,13 @@ class QueryRequest(BaseModel):
     question: str = Field(min_length=1)
     session_id: Optional[str] = None
     top_k: Optional[int] = None
+    model: Optional[str] = None
 
 
 class Source(BaseModel):
     source: str
     chunk_index: int
+    page: int | None = None
 
 
 class QueryResponse(BaseModel):

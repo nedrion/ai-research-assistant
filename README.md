@@ -67,8 +67,8 @@ cd src/ui && npm run dev
 | Route | Page | Description |
 |-------|------|-------------|
 | `/` | Documents | Upload, list, and delete PDF documents |
-| `/chat` | Chat | Session-based Q&A over your documents |
-| `/status` | Status | Vector store stats and model info |
+| `/chat` | Chat | Session-based Q&A with persistent history across page navigations |
+| `/status` | Status | Vector store stats and model info (click badges to switch model in Chat) |
 
 ## API
 
@@ -91,7 +91,8 @@ All endpoints are prefixed with `/api`.
 | `GET` | `/api/documents` | List ingested documents with chunk counts |
 | `DELETE` | `/api/documents` | Clear all documents |
 | `DELETE` | `/api/documents/{filename}` | Remove a specific document |
-| `POST` | `/api/query` | Ask a question (session-based) |
+| `POST` | `/api/query` | Ask a question (session-based, supports `model` override per request) |
+| `GET` | `/api/sessions/{session_id}` | Retrieve past messages for a session |
 | `GET` | `/api/status` | Vector store stats |
 | `GET` | `/api/models` | Available Ollama models |
 
@@ -115,6 +116,14 @@ curl -X POST -H "Content-Type: application/json" \
 curl -X POST -H "Content-Type: application/json" \
   -d '{"question": "Tell me more", "session_id": "<id from previous>"}' \
   http://127.0.0.1:8000/api/query
+
+# Override the LLM model per query (no restart needed)
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"question": "Summarize this", "model": "phi3:latest"}' \
+  http://127.0.0.1:8000/api/query
+
+# Retrieve conversation history
+curl http://127.0.0.1:8000/api/sessions/<session_id>
 
 # Check store
 curl http://127.0.0.1:8000/api/status
@@ -145,7 +154,7 @@ Edit `.env` to tune:
 | `API_HOST` | `127.0.0.1` | API server bind address |
 | `API_PORT` | `8000` | API server port |
 
-Model switching is done at runtime — change `LLM_MODEL` in `.env` and restart. The system validates the model exists in Ollama before proceeding.
+Models can be switched **per query** from the Chat page (model picker dropdown) or by passing `"model"` in the API request body — no restart needed. The `.env` value serves as the default when no override is specified.
 
 ## Project Structure
 
@@ -159,7 +168,8 @@ src/
 │   ├── embedding_service.py
 │   └── pdf_service.py     (PDF loading & chunking)
 ├── repositories/    # Data access
-│   └── vector_store.py    (ChromaDB CRUD)
+│   ├── vector_store.py        (ChromaDB CRUD)
+│   └── session_repository.py  (SQLite session storage)
 ├── cli/             # CLI presentation (Rich)
 │   ├── __main__.py
 │   └── app.py
@@ -170,6 +180,7 @@ src/
 │   └── routes/
 │       ├── documents.py
 │       ├── query.py
+│       ├── sessions.py
 │       └── status.py
 ├── ui/              # Web UI (Vite + React + TypeScript)
 │   ├── src/
@@ -183,7 +194,9 @@ src/
 │   └── dist/        # Built SPA (served by FastAPI in production)
 ├── main.py          # Entry point (only `serve`)
 data/
-└── chroma/          # Vector store persistence (gitignored)
+├── chroma/          # Vector store persistence (gitignored)
+├── sessions.db      # SQLite session history (gitignored)
+└── pdfs/            # Uploaded PDFs for inline preview (gitignored)
 screenshots/
 ├── architecture.svg
 ├── status.svg

@@ -27,9 +27,9 @@ Thumbs.db
 
 # Temp / logs
 *.log
-srv_*.txt
-e2e_*.txt
-uv_*.txt
+srv*.txt
+e2e*.txt
+uv*.txt
 .ruff_cache/
 .mypy_cache/
 .pytest_cache/

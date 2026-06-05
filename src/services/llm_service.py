@@ -6,9 +6,10 @@ class LlmService:
         self.base_url = base_url.rstrip("/")
         self.model = model
 
-    def generate(self, prompt: str, system: str = "") -> str:
+    def generate(self, prompt: str, system: str = "", model: str | None = None) -> str:
+        model = model or self.model
         payload = {
-            "model": self.model,
+            "model": model,
             "prompt": prompt,
             "system": system,
             "stream": False,
@@ -17,8 +18,8 @@ class LlmService:
             resp = client.post(f"{self.base_url}/api/generate", json=payload)
             if resp.status_code == 404:
                 raise RuntimeError(
-                    f"Model '{self.model}' not found in Ollama. "
-                    f"Run: ollama pull {self.model}"
+                    f"Model '{model}' not found in Ollama. "
+                    f"Run: ollama pull {model}"
                 )
             resp.raise_for_status()
             return resp.json()["response"]
@@ -32,11 +33,7 @@ class LlmService:
             return False
 
     def has_model(self) -> bool:
-        models = self.list_models()
-        if self.model in models:
-            return True
-        short = self.model.split(":")[0]
-        return any(short == m.split(":")[0] for m in models)
+        return self.model in self.list_models()
 
     def list_models(self) -> list[str]:
         try:

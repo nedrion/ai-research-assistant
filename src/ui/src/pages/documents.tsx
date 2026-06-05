@@ -1,16 +1,18 @@
 import { useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { Upload, Trash2, FileText, RefreshCw } from "lucide-react"
+import { Upload, Trash2, FileText, RefreshCw, Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { PdfViewer } from "@/components/pdf-viewer"
 import { toast } from "@/hooks/use-toast"
 import { getDocuments, uploadDocument, deleteDocument, clearDocuments, getStatus } from "@/lib/api"
 
 export function DocumentsPage() {
   const queryClient = useQueryClient()
   const [uploading, setUploading] = useState(false)
+  const [previewFile, setPreviewFile] = useState<string | null>(null)
 
   const { data: documents, isLoading, error } = useQuery({
     queryKey: ["documents"],
@@ -117,18 +119,25 @@ export function DocumentsPage() {
                     <Badge variant="secondary" className="ml-2">{doc.chunks} chunks</Badge>
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => deleteMut.mutate(doc.filename)}
-                >
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" onClick={() => setPreviewFile(doc.filename)}>
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => deleteMut.mutate(doc.filename)}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+
+      <PdfViewer
+        filename={previewFile ?? ""}
+        open={previewFile !== null}
+        onClose={() => setPreviewFile(null)}
+      />
     </div>
   )
 }

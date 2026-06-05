@@ -7,11 +7,15 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.core.config import settings
+from src.core.logging import setup_logging, get_logger
 from src.services.embedding_service import EmbeddingService
 from src.repositories.vector_store import VectorRepository
 from src.services.llm_service import LlmService
 from src.services.rag_service import RagService
 from src.cli import app as cli
+
+setup_logging()
+logger = get_logger(__name__)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -61,14 +65,17 @@ def main():
     llm = LlmService(settings.ollama_base_url, settings.llm_model)
 
     if not llm.is_server_running():
-        print("Error: Ollama is not running. Start it with 'ollama serve'")
+        logger.error("Ollama is not running. Start it with 'ollama serve'")
         sys.exit(1)
 
     if not llm.has_model():
         available = llm.list_models()
-        print(f"Error: Model '{settings.llm_model}' is not installed in Ollama.")
-        print(f"Change LLM_MODEL in .env to one of: {', '.join(available) if available else '(none available)'}")
-        print(f"Or pull it: ollama pull {settings.llm_model}")
+        logger.error(
+            "Model '%s' not found in Ollama. Set LLM_MODEL in .env to one of: %s",
+            settings.llm_model,
+            ", ".join(available) if available else "(none available)",
+        )
+        logger.error("Or pull it: ollama pull %s", settings.llm_model)
         sys.exit(1)
 
     pipeline = RagService(embedder, vector_store, llm, settings.top_k)

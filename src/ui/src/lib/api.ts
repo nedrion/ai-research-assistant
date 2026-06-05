@@ -20,9 +20,15 @@ export interface ModelsResponse {
   current: string
 }
 
+export interface Source {
+  source: string
+  chunk_index: number
+  page?: number | null
+}
+
 export interface QueryResponse {
   answer: string
-  sources: { source: string; chunk_index: number }[]
+  sources: Source[]
   session_id: string
 }
 
@@ -30,6 +36,12 @@ export interface DocumentIngestResponse {
   filename: string
   chunks_created: number
   total_chunks: number
+}
+
+export function getPdfUrl(filename: string, page?: number | null): string {
+  const base = `${BASE}/documents/${encodeURIComponent(filename)}/pdf`
+  if (page) return `${base}#page=${page}`
+  return base
 }
 
 async function handleResponse<T>(resp: Response): Promise<T> {
@@ -72,11 +84,26 @@ export async function clearDocuments(): Promise<{ message: string }> {
   return handleResponse(resp)
 }
 
-export async function sendQuery(question: string, sessionId?: string, topK?: number): Promise<QueryResponse> {
+export interface SessionMessage {
+  role: "user" | "assistant"
+  content: string
+}
+
+export interface SessionResponse {
+  session_id: string
+  messages: SessionMessage[]
+}
+
+export async function getSessionHistory(sessionId: string): Promise<SessionResponse> {
+  const resp = await fetch(`${BASE}/sessions/${encodeURIComponent(sessionId)}`)
+  return handleResponse<SessionResponse>(resp)
+}
+
+export async function sendQuery(question: string, sessionId?: string, topK?: number, model?: string): Promise<QueryResponse> {
   const resp = await fetch(`${BASE}/query`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ question, session_id: sessionId, top_k: topK }),
+    body: JSON.stringify({ question, session_id: sessionId, top_k: topK, model }),
   })
   return handleResponse<QueryResponse>(resp)
 }
